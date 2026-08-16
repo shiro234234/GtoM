@@ -15,9 +15,17 @@ class MenuList(BaseModel):
 
 # 数字以外の文字を取り除いて数値（int）に変換するヘルパー関数
 def parse_price(price_str: str) -> int:
-    # 数字だけを抽出（例: "1,200円" -> "1200"）
-    numbers = re.sub(r'[^\d]', '', price_str)
-    return int(numbers) if numbers else 0
+    # 「税込」の直後にある数字（カンマ込み）を探す
+    tax_included_match = re.search(r'税込\s*([\d,]+)', price_str)
+    if tax_included_match:
+        return int(tax_included_match.group(1).replace(',', ''))
+    
+    # 税込表記がない場合は最初に出てくる数字を取得
+    first_match = re.search(r'\d[\d,]*', price_str)
+    if first_match:
+        return int(first_match.group().replace(',', ''))
+        
+    return 0
     
 st.title("写真からメニュー選択アプリ")
 
