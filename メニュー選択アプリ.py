@@ -49,7 +49,7 @@ if uploaded_files:
         
     if st.button("メニューを解析する"):
         with st.spinner("AIがすべての画像を解析中..."):
-            client = genai.Client(api_key="AQ.Ab8RN6J1IADCLstn16IjVt0Z-YfW_Bu4wt6p8KkeypScEXjgUQ")
+            client = genai.Client()
             
             prompt = (
                 "送信された画像から、写っている全メニューと価格を抽出してください。\n"
