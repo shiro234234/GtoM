@@ -4,6 +4,7 @@ from google.genai import types
 from PIL import Image
 from pydantic import BaseModel
 import re
+from collections import defaultdict
 
 # 構造化出力用のデータ型を定義
 class MenuItem(BaseModel):
@@ -26,6 +27,22 @@ def parse_price(price_str: str) -> int:
         return int(first_match.group().replace(',', ''))
         
     return 0
+
+# 【追加】メニュー名から商品名本体とグラム数/サイズ等のバリエーションを分離する関数
+def parse_menu_name(full_name: str):
+    # グラム数、サイズ、個数などのパターン（例: 200g, 100g, S/M/L, 2人前など）
+    pattern = r'(\d+\s*(?:g|g|kg|粒|個|本|枚|皿|人前)|[SMLsml]サイズ|[大中小]|シングル|ダブル)'
+    match = re.search(pattern, full_name)
+    
+    if match:
+        variant = match.group(0)
+        # バリエーション部分を取り除いたものを商品名本体とする
+        base_name = full_name.replace(variant, '').strip()
+        # 記号の取りこぼし等を整理
+        base_name = re.sub(r'[\s\(\)（）]+$', '', base_name).strip()
+        return base_name if base_name else full_name, variant
+    else:
+        return full_name, "通常"
     
 st.title("写真からメニュー選択アプリ")
 
@@ -69,16 +86,29 @@ if uploaded_files:
 # 解析結果が存在すれば選択可能なリストを表示
 if 'menu_items' in st.session_state:
     st.write("### メニュー一覧と数量選択")
+    # 【追加】商品名本体ごとにメニューをグループ化
+    grouped_items = defaultdict(list)
+    for item in st.session_state['menu_items']:
+        base_name, variant = parse_menu_name(item.name)
+        grouped_items[base_name].append((variant, item))
+
     selected_orders = []
     total_amount = 0
+    item_index = 0
     
-    # 各メニューごとに数量変更ボタン（＋／ー）を配置
-    for idx, item in enumerate(st.session_state['menu_items']):
-        col1, col2 = st.columns([3, 2])
+    # グループごとにまとめて表示
+    for base_name, variants in grouped_items.items():
+        st.markdown(f"#### 🍽️ {base_name}")
+        
+        for variant, item in variants:
+            col1, col2 = st.columns([3, 2])
         
         with col1:
-            st.write(f"**{item.name}**")
-            st.caption(f"価格: {item.price}")
+            if variant != "通常":
+                    st.write(f"&nbsp;&nbsp;&nbsp;&nbsp;・ **{variant}**")
+                else:
+                    st.write("&nbsp;&nbsp;&nbsp;&nbsp;・ 通常")
+                st.caption(f"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;価格: {item.price}")
             
         with col2:
             # ＋ーボタン付きの数値入力UI
@@ -94,6 +124,7 @@ if 'menu_items' in st.session_state:
                 label_visibility="collapsed"
             )
             st.session_state['quantities'][item.name] = qty
+            item_index += 1
             
         if qty > 0:
             unit_price = parse_price(item.price)
