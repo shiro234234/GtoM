@@ -30,30 +30,36 @@ def parse_price(price_str: str) -> int:
 st.title("写真からメニュー選択アプリ")
 
 # 画像のアップロード
-uploaded_file = st.file_uploader("メニューの写真をアップロードしてください", type=["jpg", "jpeg", "png"])
+uploaded_files = st.file_uploader(
+    "メニューの写真をアップロードしてください（複数可）",
+    type=["jpg", "jpeg", "png"],
+    accept_multiple_files=True
+)
 
-# if文の末尾にコロンを追加
-if uploaded_file is not None:
-    image = Image.open(uploaded_file)
-    st.image(image, caption="アップロードされた画像", use_container_width=True)	
-
-    # if文の末尾にコロン、文字列をダブルクォーテーションで囲む
+if uploaded_files:
+    images = [Image.open(file) for file in uploaded_files]
+    
+    # 選択された画像をグリッド表示
+    st.write(f"**アップロード済み: {len(images)} 枚**")
+    cols = st.columns(min(len(images), 3))
+    for i, img in enumerate(images):
+        cols[i % 3].image(img, caption=f"画像 {i+1}", use_container_width=True)
+        
     if st.button("メニューを解析する"):
-        # with文の末尾にコロン、文字列をダブルクォーテーションで囲む
-        with st.spinner("AIが解析中..."):
-            # Clientの初期化（環境変数 GEMINI_API_KEY が設定されている前提）
+        with st.spinner("AIがすべての画像を解析中..."):
             client = genai.Client(api_key="AQ.Ab8RN6J1IADCLstn16IjVt0Z-YfW_Bu4wt6p8KkeypScEXjgUQ")
             
-            # 画像から構造化されたJSONデータを抽出
+            # すべての画像とプロンプトをリストにして送信
+            contents = [*images, "送信されたすべての画像から、写っている全メニューと価格を網羅して抽出してください。"]
+            
             response = client.models.generate_content(
                 model='gemini-3.6-flash',
-                contents=[image, "画像に写っているメニューと価格を抽出してください。"],
+                contents=contents,
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",
                     response_schema=MenuList,
                 ),
             )
-            
             # レスポンス（Pydanticオブジェクト）の取得
             menu_data: MenuList = response.parsed
             st.session_state['menu_items'] = menu_data.items
