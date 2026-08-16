@@ -54,8 +54,8 @@ if uploaded_file is not None:
 
 # 解析結果が存在すれば選択可能なリストを表示
 if 'menu_items' in st.session_state:
-    st.write("### 選択可能なメニュー一覧")
-    selected_items = []
+    st.write("### メニュー一覧と数量選択")
+    selected_orders = []
     total_amount = 0
     
     # 各メニューごとに数量変更ボタン（＋／ー）を配置
