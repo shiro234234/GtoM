@@ -62,7 +62,7 @@ if uploaded_files:
             contents = [*images, prompt]
             
             response = client.models.generate_content(
-                model='gemini-3.6-flash',
+                model='gemini-2.0-flash',
                 contents=contents,
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",
@@ -73,7 +73,10 @@ if uploaded_files:
             menu_data: MenuList = response.parsed
             st.session_state['menu_items'] = menu_data.items
             # 数量を管理する辞書を初期化
-            st.session_state['quantities'] = {item.name: 0 for item in menu_data.items}
+            st.session_state['quantities'] = {
+                f"{item.main_name}_{item.variant}_{idx}": 0 
+                for idx, item in enumerate(menu_data.items)
+            }
 
 # 解析結果が存在すれば選択可能なリストを表示
 if 'menu_items' in st.session_state:
