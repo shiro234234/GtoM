@@ -105,10 +105,10 @@ if 'menu_items' in st.session_state:
         
         with col1:
             if variant != "通常":
-                    st.write(f"&nbsp;&nbsp;&nbsp;&nbsp;・ **{variant}**")
-                else:
-                    st.write("&nbsp;&nbsp;&nbsp;&nbsp;・ 通常")
-                st.caption(f"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;価格: {item.price}")
+                st.write(f"&nbsp;&nbsp;&nbsp;&nbsp;・ **{variant}**")
+            else:
+                st.write("&nbsp;&nbsp;&nbsp;&nbsp;・ 通常")
+            st.caption(f"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;価格: {item.price}")
             
         with col2:
             # ＋ーボタン付きの数値入力UI
@@ -120,7 +120,7 @@ if 'menu_items' in st.session_state:
                 max_value=20,
                 value=current_qty,
                 step=1,
-                key=f"qty_{idx}_{item.name}",
+                key=f"qty_{item_index}_{item.name}",
                 label_visibility="collapsed"
             )
             st.session_state['quantities'][item.name] = qty
