@@ -9,6 +9,7 @@ from collections import defaultdict
 # 構造化出力用のデータ型を定義
 class MenuItem(BaseModel):
     main_name: str  # 例: "熟成牛の荒引きハンバーグ(ランチ)"
+    category: str   # 例: "ランチ", "グランドメニュー", "セット", "単品" など
     variant: str    # 例: "200g", "250g", "ダブル", "通常" など
     price: str      # 例: "1180円(税込1298円)"
 
@@ -68,10 +69,11 @@ if uploaded_files:
             
             prompt = (
                 "送信された画像から、写っている全メニューと価格を抽出してください。\n"
-                "商品名にグラム数やサイズ(200g, 250g, ダブル, S/M/Lなど)が含まれる場合は、"
-                "main_nameには商品名本体(例: 熟成牛の荒引きハンバーグ)を入れ、"
-                "variantにはグラム数やサイズ(例: 200g)を分離して入れてください。"
-                "サイズ違いがない場合は variant に '通常' と入力してください。"
+                "1. main_name: 商品名本体(例: 熟成牛の荒引きハンバーグ)\n"
+                "2. category: ランチメニューか、グランドメニュー(ディナー)か、セット/単品などの区分(例: ランチ, 通常)\n"
+                "3. variant: グラム数やサイズ(例: 200g, ダブル)。ない場合は '通常'\n"
+                "4. price: 価格表記\n"
+                "同じ商品名でもランチとディナー、あるいはセット内容で価格が異なる場合は category を明確に区別してください。"
             )
             
             try:
@@ -103,12 +105,13 @@ if 'menu_items' in st.session_state:
         for idx, item in items:
             col1, col2 = st.columns([3, 2])
             
-            # 【修正】レイアウトずれ（大きな空白）を防ぐためインデントを正しく配置
+            # 表示時に category（区分）を添えて判別可能にする
             with col1:
+                cat_tag = f"[{item.category}] " if item.category and item.category != "通常" else ""
                 if item.variant and item.variant != "通常":
-                    st.write(f"・ **{item.variant}**")
+                    st.write(f"・ **{cat_tag}{item.variant}**")
                 else:
-                    st.write("・ **通常**")
+                    st.write(f"・ **{cat_tag}通常**")
                 st.caption(f"価格: {item.price}")
             
             with col2:
