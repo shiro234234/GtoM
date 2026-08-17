@@ -54,9 +54,8 @@ uploaded_files = st.file_uploader(
     accept_multiple_files=True
 )
 
-# アップロード状況の変化を検知して前回の結果をクリアする処理
-# ファイル数が変わった場合や、ファイル自体が変わった場合にセッションをリセット
-current_files_key = [f.name for f in uploaded_files] if uploaded_files else []
+# ファイル名とサイズを組み合わせたキーで変更を確実に検知
+current_files_key = [f"{f.name}_{f.size}" for f in uploaded_files] if uploaded_files else []
 if st.session_state.get('prev_uploaded_files') != current_files_key:
     st.session_state['prev_uploaded_files'] = current_files_key
     if 'menu_items' in st.session_state:
@@ -74,6 +73,12 @@ if uploaded_files:
         cols[i % 3].image(img, caption=f"画像 {i+1}", use_container_width=True)
         
     if st.button("メニューを解析する"):
+        # 【追加】解析実行時に確実に古いデータを一度削除する
+        if 'menu_items' in st.session_state:
+            del st.session_state['menu_items']
+        if 'quantities' in st.session_state:
+            del st.session_state['quantities']
+
         with st.spinner("AIがすべての画像を解析中..."):
             client = genai.Client()
             
