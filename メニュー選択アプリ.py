@@ -58,7 +58,7 @@ st.title("写真からメニュー選択アプリ")
 uploaded_files = st.file_uploader(
     "メニューの写真をアップロードしてください（複数可）",
     type=["jpg", "jpeg", "png"],
-    accept_multiple_files=True
+    accept_multiple_files=True,
     # 【追加】ファイルの追加・削除・入れ替え時にリセット処理を実行
     on_change=reset_analysis
 )
