@@ -30,7 +30,8 @@ def parse_price(price_str: str) -> int:
         
     return 0
 
-@st.cache_data(show_spinner=False)
+# @st.cache_data を削除して毎回フレッシュにAPI呼び出しを行う
+# @st.cache_data(show_spinner=False)
 def analyze_images(_images, prompt_text):
     client = genai.Client()
     contents = [*_images, prompt_text]
@@ -54,7 +55,7 @@ uploaded_files = st.file_uploader(
     accept_multiple_files=True
 )
 
-# ファイル名とサイズを組み合わせたキーで変更を確実に検知
+# ファイルの選択状況が変わった場合にセッション内の旧解析データをクリア
 current_files_key = [f"{f.name}_{f.size}" for f in uploaded_files] if uploaded_files else []
 if st.session_state.get('prev_uploaded_files') != current_files_key:
     st.session_state['prev_uploaded_files'] = current_files_key
@@ -73,7 +74,8 @@ if uploaded_files:
         cols[i % 3].image(img, caption=f"画像 {i+1}", use_container_width=True)
         
     if st.button("メニューを解析する"):
-        # 【追加】解析実行時に確実に古いデータを一度削除する
+        # 【追加】ボタン押下時にキャッシュとセッションの旧データを完全消去
+        st.cache_data.clear()
         if 'menu_items' in st.session_state:
             del st.session_state['menu_items']
         if 'quantities' in st.session_state:
@@ -92,13 +94,14 @@ if uploaded_files:
             )
             
             try:
-                # キャッシュ関数を実行して結果を取得
+                # 【修正】関数の引数からアンダースコアを除去して直接呼び出し
                 menu_data = analyze_images(images, prompt)
                 st.session_state['menu_items'] = menu_data.items
                 st.session_state['quantities'] = {
-                    f"{item.main_name}_{item.variant}_{idx}": 0 
+                    f"{item.main_name}_{item.category}_{item.variant}_{idx}": 0 
                     for idx, item in enumerate(menu_data.items)
                 }
+
             except Exception as e:
                 st.error(f"解析エラー: {e}")
 
