@@ -34,9 +34,8 @@ def analyze_images(_images, prompt_text):
     client = genai.Client()
     contents = [*_images, prompt_text]
     
-    # 【修正】モデル名を gemini-2.0-flash に変更
     response = client.models.generate_content(
-        model='gemini-2.0-flash',
+        model='gemini-2.5-flash',
         contents=contents,
         config=types.GenerateContentConfig(
             response_mime_type="application/json",
