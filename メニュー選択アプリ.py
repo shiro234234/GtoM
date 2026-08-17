@@ -45,6 +45,13 @@ def analyze_images(_images, prompt_text):
     )
     return response.parsed
 
+# 画像が新しく変更されたら過去の解析結果をリセットする関数
+def reset_analysis():
+    if 'menu_items' in st.session_state:
+        del st.session_state['menu_items']
+    if 'quantities' in st.session_state:
+        del st.session_state['quantities']
+
 st.title("写真からメニュー選択アプリ")
 
 # 画像のアップロード
@@ -52,6 +59,8 @@ uploaded_files = st.file_uploader(
     "メニューの写真をアップロードしてください（複数可）",
     type=["jpg", "jpeg", "png"],
     accept_multiple_files=True
+    # 【追加】ファイルの追加・削除・入れ替え時にリセット処理を実行
+    on_change=reset_analysis
 )
 
 if uploaded_files:
