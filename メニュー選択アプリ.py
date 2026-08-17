@@ -29,6 +29,22 @@ def parse_price(price_str: str) -> int:
         
     return 0
 
+@st.cache_data(show_spinner=False)
+def analyze_images(_images, prompt_text):
+    client = genai.Client()
+    contents = [*_images, prompt_text]
+    
+    # 【修正】モデル名を gemini-2.0-flash に変更
+    response = client.models.generate_content(
+        model='gemini-2.0-flash',
+        contents=contents,
+        config=types.GenerateContentConfig(
+            response_mime_type="application/json",
+            response_schema=MenuList,
+        ),
+    )
+    return response.parsed
+
 st.title("写真からメニュー選択アプリ")
 
 # 画像のアップロード
@@ -59,24 +75,16 @@ if uploaded_files:
                 "サイズ違いがない場合は variant に '通常' と入力してください。"
             )
             
-            contents = [*images, prompt]
-            
-            response = client.models.generate_content(
-                model='gemini-3.6-flash',
-                contents=contents,
-                config=types.GenerateContentConfig(
-                    response_mime_type="application/json",
-                    response_schema=MenuList,
-                ),
-            )
-            # レスポンス（Pydanticオブジェクト）の取得
-            menu_data: MenuList = response.parsed
-            st.session_state['menu_items'] = menu_data.items
-            # 数量を管理する辞書を初期化
-            st.session_state['quantities'] = {
-                f"{item.main_name}_{item.variant}_{idx}": 0 
-                for idx, item in enumerate(menu_data.items)
-            }
+            try:
+                # キャッシュ関数を実行して結果を取得
+                menu_data = analyze_images(images, prompt)
+                st.session_state['menu_items'] = menu_data.items
+                st.session_state['quantities'] = {
+                    f"{item.main_name}_{item.variant}_{idx}": 0 
+                    for idx, item in enumerate(menu_data.items)
+                }
+            except Exception as e:
+                st.error(f"解析エラー: {e}")
 
 # 解析結果が存在すれば選択可能なリストを表示
 if 'menu_items' in st.session_state:
