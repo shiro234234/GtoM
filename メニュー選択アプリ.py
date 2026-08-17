@@ -35,7 +35,7 @@ def analyze_images(_images, prompt_text):
     contents = [*_images, prompt_text]
     
     response = client.models.generate_content(
-        model='gemini-flash-latest',
+        model='gemini-3.6-flash',
         contents=contents,
         config=types.GenerateContentConfig(
             response_mime_type="application/json",
